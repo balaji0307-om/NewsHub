@@ -37,7 +37,7 @@ python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-The provided key has already been placed in `.env.example`. For production, keep it only in `.env`.
+Put your NewsAPI key in `backend/.env`. Do not commit the real `.env` file.
 
 3. Install frontend dependencies:
 
@@ -61,3 +61,29 @@ npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
 Open `http://127.0.0.1:5173`.
+
+## Render Deployment
+
+Deploy this as two Render services.
+
+### Backend
+
+- Type: Web Service
+- Root directory: `backend`
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- Environment variables:
+  - `NEWS_API_KEY`: your NewsAPI key
+  - `SECRET_KEY`: any long random string
+  - `FRONTEND_ORIGIN`: your Render frontend URL, for example `https://newshub-frontend-r1ir.onrender.com`
+
+### Frontend
+
+- Type: Static Site
+- Root directory: `frontend`
+- Build command: `npm install && npm run build`
+- Publish directory: `dist`
+- Environment variables:
+  - `VITE_API_BASE_URL`: your Render backend URL, for example `https://your-backend-name.onrender.com`
+
+If the deployed frontend shows `0 latest stories loaded`, the frontend is running but cannot reach the backend URL.

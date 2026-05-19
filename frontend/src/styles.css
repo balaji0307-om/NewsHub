@@ -479,6 +479,38 @@ main {
   gap: 18px;
 }
 
+.emptyState {
+  display: grid;
+  gap: 12px;
+  margin: 6px clamp(18px, 4vw, 56px) 28px;
+  padding: 28px;
+  border: 1px solid #d8d8d1;
+  border-radius: 8px;
+  background: white;
+}
+
+.emptyState h2 {
+  margin: 0;
+}
+
+.emptyState p {
+  max-width: 680px;
+  margin: 0;
+  color: #62625b;
+  line-height: 1.5;
+}
+
+.emptyState button {
+  width: fit-content;
+  min-height: 40px;
+  padding: 0 16px;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  background: #151515;
+  font-weight: 800;
+}
+
 .loadingGrid span {
   min-height: 240px;
   border-radius: 8px;

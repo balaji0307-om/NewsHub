@@ -32,6 +32,7 @@ function App() {
   const [preferences, setPreferences] = useState(['general', 'technology']);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [apiError, setApiError] = useState('');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
 
   const savedUrls = useMemo(() => new Set(bookmarks.map((item) => item.url)), [bookmarks]);
@@ -58,7 +59,11 @@ function App() {
     const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(`${API_BASE}${path}`, { ...options, headers, signal: controller.signal })
+      .finally(() => window.clearTimeout(timeout));
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.detail || 'Request failed');
     return data;
@@ -79,8 +84,13 @@ function App() {
       const params = new URLSearchParams({ category: activeCategory, q: query, page_size: '18' });
       const data = await request(`/news?${params}`);
       setArticles(data.articles || []);
+      setApiError('');
     } catch (error) {
-      setMessage(error.message);
+      const detail = error.name === 'AbortError'
+        ? 'Backend request timed out. Check the deployed API URL.'
+        : 'News API is not reachable. Check VITE_API_BASE_URL and backend deployment.';
+      setApiError(detail);
+      setMessage(detail);
     } finally {
       setLoading(false);
     }
@@ -239,6 +249,14 @@ function App() {
         </section>
       ) : (
         <>
+          {apiError && articles.length === 0 && (
+            <section className="emptyState">
+              <h2>Connect the FastAPI backend</h2>
+              <p>{apiError}</p>
+              <button onClick={getNews}>Retry</button>
+            </section>
+          )}
+
           {leadArticle && (
             <section className="leadLayout">
               <ArticleCard article={leadArticle} large saved={savedUrls.has(leadArticle.url)} onBookmark={toggleBookmark} />
