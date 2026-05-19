@@ -78,6 +78,50 @@ const SAMPLE_ARTICLES = [
   },
 ];
 
+const FALLBACK_HEADLINE_TEMPLATES = [
+  'Key developments to watch as the story continues to unfold',
+  'Analysts explain what the latest updates mean for readers',
+  'A quick briefing on the biggest signals from today',
+  'Local and global reactions shape the next phase of coverage',
+  'What changed today and why it matters now',
+  'Fresh context around the people and decisions in focus',
+  'The main questions still driving the conversation',
+  'A concise update on momentum, impact, and next steps',
+];
+
+function buildFallbackArticles(category, query) {
+  const selected = activeFallbackSeeds(category);
+  const generated = FALLBACK_HEADLINE_TEMPLATES.map((title, index) => {
+    const seed = selected[index % selected.length];
+    const topic = category === 'general' ? seed.category : category;
+    return {
+      ...seed,
+      title: `${topic[0].toUpperCase()}${topic.slice(1)} briefing: ${title}`,
+      description: seed.description,
+      url: `${seed.url}?newspulse=${topic}-${index}`,
+      published_at: new Date(Date.now() - index * 1800000).toISOString(),
+      category: topic,
+    };
+  });
+
+  const articles = [...selected, ...generated];
+  if (!query) return articles;
+
+  const searchTerm = query.toLowerCase();
+  return articles.filter((article) => {
+    const searchTarget = `${article.title} ${article.description} ${article.category} ${article.source}`.toLowerCase();
+    return searchTarget.includes(searchTerm);
+  });
+}
+
+function activeFallbackSeeds(category) {
+  if (category === 'general') return SAMPLE_ARTICLES;
+
+  const categoryArticle = SAMPLE_ARTICLES.find((article) => article.category === category);
+  const generalArticle = SAMPLE_ARTICLES.find((article) => article.category === 'general');
+  return [categoryArticle, generalArticle].filter(Boolean);
+}
+
 function App() {
   const [articles, setArticles] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
@@ -147,13 +191,8 @@ function App() {
       setArticles(data.articles || []);
       setApiError('');
     } catch {
-      const filteredArticles = SAMPLE_ARTICLES.filter((article) => {
-        const matchesCategory = activeCategory === 'general' || article.category === activeCategory;
-        const searchTarget = `${article.title} ${article.description} ${article.category}`.toLowerCase();
-        const matchesQuery = !query || searchTarget.includes(query.toLowerCase());
-        return matchesCategory && matchesQuery;
-      });
-      setArticles(filteredArticles.length ? filteredArticles : SAMPLE_ARTICLES);
+      const fallbackArticles = buildFallbackArticles(activeCategory, query);
+      setArticles(fallbackArticles.length ? fallbackArticles : buildFallbackArticles(activeCategory, ''));
       setApiError('');
     } finally {
       setLoading(false);
