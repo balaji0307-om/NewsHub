@@ -21,7 +21,17 @@ load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me").encode()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./newshub.db")
-FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://127.0.0.1:5173")
+DEFAULT_FRONTEND_ORIGINS = [
+    "https://newshub-frontend-r1ir.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+FRONTEND_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("FRONTEND_ORIGINS", os.getenv("FRONTEND_ORIGIN", "")).split(",")
+    if origin.strip()
+]
+ALLOWED_FRONTEND_ORIGINS = list(dict.fromkeys([*FRONTEND_ORIGINS, *DEFAULT_FRONTEND_ORIGINS]))
 DB_PATH = DATABASE_URL.replace("sqlite:///", "", 1)
 
 CATEGORIES = ["general", "business", "technology", "sports", "entertainment", "health", "science"]
@@ -29,7 +39,7 @@ CATEGORIES = ["general", "business", "technology", "sports", "entertainment", "h
 app = FastAPI(title="NewsHub API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN, "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=ALLOWED_FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

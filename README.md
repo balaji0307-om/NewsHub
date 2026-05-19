@@ -75,7 +75,7 @@ Deploy this as two Render services.
 - Environment variables:
   - `NEWS_API_KEY`: your NewsAPI key
   - `SECRET_KEY`: any long random string
-  - `FRONTEND_ORIGIN`: your Render frontend URL, for example `https://newshub-frontend-r1ir.onrender.com`
+  - `FRONTEND_ORIGINS`: allowed frontend URLs, comma-separated. Example: `https://newshub-frontend-r1ir.onrender.com,http://localhost:5173,http://127.0.0.1:5173`
 
 ### Frontend
 
