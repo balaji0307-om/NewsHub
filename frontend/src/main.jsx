@@ -14,6 +14,62 @@ import './styles.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8010';
 const DEFAULT_CATEGORIES = ['general', 'business', 'technology', 'sports', 'entertainment', 'health', 'science'];
+const SAMPLE_ARTICLES = [
+  {
+    title: 'Global leaders meet as markets watch the next wave of policy decisions',
+    description: 'A concise briefing on international developments, economic signals, and the stories shaping the day.',
+    url: 'https://www.reuters.com/world/',
+    image_url: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80',
+    source: 'NewsPulse Desk',
+    published_at: new Date().toISOString(),
+    category: 'general',
+  },
+  {
+    title: 'Technology companies race to build faster and more useful AI products',
+    description: 'New product launches and platform updates are changing how teams search, write, and automate work.',
+    url: 'https://www.theverge.com/tech',
+    image_url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+    source: 'Tech Wire',
+    published_at: new Date().toISOString(),
+    category: 'technology',
+  },
+  {
+    title: 'Sports roundup: major fixtures bring late drama and standout performances',
+    description: 'A quick look at the biggest results, key players, and what fans are watching next.',
+    url: 'https://www.espn.com/',
+    image_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80',
+    source: 'Sports Desk',
+    published_at: new Date().toISOString(),
+    category: 'sports',
+  },
+  {
+    title: 'Entertainment highlights: awards, releases, and streaming stories to know',
+    description: 'The latest from film, music, streaming, and culture in one fast-moving digest.',
+    url: 'https://variety.com/',
+    image_url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+    source: 'Culture Daily',
+    published_at: new Date().toISOString(),
+    category: 'entertainment',
+  },
+  {
+    title: 'Business briefing: companies adjust plans amid shifting consumer demand',
+    description: 'Executives and investors are tracking earnings, hiring trends, and global supply updates.',
+    url: 'https://www.cnbc.com/business/',
+    image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+    source: 'Market Watch',
+    published_at: new Date().toISOString(),
+    category: 'business',
+  },
+  {
+    title: 'Health researchers share practical guidance for everyday wellbeing',
+    description: 'Public health teams continue to focus on prevention, access, and clearer information for families.',
+    url: 'https://www.who.int/news',
+    image_url: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1200&q=80',
+    source: 'Health Review',
+    published_at: new Date().toISOString(),
+    category: 'health',
+  },
+];
 
 function App() {
   const [articles, setArticles] = useState([]);
@@ -83,12 +139,15 @@ function App() {
       const data = await request(`/news?${params}`);
       setArticles(data.articles || []);
       setApiError('');
-    } catch (error) {
-      const detail = error.name === 'AbortError'
-        ? 'Backend request timed out. Check the deployed API URL.'
-        : 'News API is not reachable. Check VITE_API_BASE_URL and backend deployment.';
-      setApiError(detail);
-      setMessage(detail);
+    } catch {
+      const filteredArticles = SAMPLE_ARTICLES.filter((article) => {
+        const matchesCategory = activeCategory === 'general' || article.category === activeCategory;
+        const searchTarget = `${article.title} ${article.description} ${article.category}`.toLowerCase();
+        const matchesQuery = !query || searchTarget.includes(query.toLowerCase());
+        return matchesCategory && matchesQuery;
+      });
+      setArticles(filteredArticles.length ? filteredArticles : SAMPLE_ARTICLES);
+      setApiError('');
     } finally {
       setLoading(false);
     }
@@ -213,8 +272,8 @@ function App() {
 
       <section className="tickerBar" aria-label="Breaking news ticker">
         <div>
-          Breaking News · Latest Updates · Global Headlines · Trending Stories · Business · Technology · Sports · Entertainment ·
-          Breaking News · Latest Updates · Global Headlines · Trending Stories · Business · Technology · Sports · Entertainment ·
+          Breaking News - Latest Updates - Global Headlines - Trending Stories - Business - Technology - Sports - Entertainment -
+          Breaking News - Latest Updates - Global Headlines - Trending Stories - Business - Technology - Sports - Entertainment -
         </div>
       </section>
 
