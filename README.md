@@ -73,7 +73,7 @@ Deploy this as two Render services.
 - Build command: `pip install -r requirements.txt`
 - Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 - Environment variables:
-  - `NEWS_API_KEY`: your NewsAPI key
+  - `NEWS_API_KEY`: your NewsAPI key. Optional; if missing, the backend uses Google News RSS for live headlines.
   - `SECRET_KEY`: any long random string
   - `FRONTEND_ORIGINS`: allowed frontend URLs, comma-separated. Example: `https://newshub-frontend-r1ir.onrender.com,http://localhost:5173,http://127.0.0.1:5173`
 

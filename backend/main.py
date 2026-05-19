@@ -1,14 +1,18 @@
 import base64
 import hashlib
 import hmac
+import html
 import json
 import os
+import re
 import secrets
 import sqlite3
 import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import quote_plus
+from xml.etree import ElementTree
 
 import httpx
 from dotenv import load_dotenv
@@ -35,6 +39,14 @@ ALLOWED_FRONTEND_ORIGINS = list(dict.fromkeys([*FRONTEND_ORIGINS, *DEFAULT_FRONT
 DB_PATH = DATABASE_URL.replace("sqlite:///", "", 1)
 
 CATEGORIES = ["general", "business", "technology", "sports", "entertainment", "health", "science"]
+GOOGLE_NEWS_TOPICS = {
+    "business": "BUSINESS",
+    "technology": "TECHNOLOGY",
+    "sports": "SPORTS",
+    "entertainment": "ENTERTAINMENT",
+    "health": "HEALTH",
+    "science": "SCIENCE",
+}
 
 app = FastAPI(title="NewsHub API", version="1.0.0")
 app.add_middleware(
@@ -182,7 +194,7 @@ def user_response(user: sqlite3.Row, token: str | None = None) -> dict[str, Any]
 
 async def fetch_news(category: str, query: str, page_size: int) -> list[dict[str, Any]]:
     if not NEWS_API_KEY:
-        return fallback_articles(category, query)
+        return await fetch_rss_news(category, query, page_size)
 
     params: dict[str, Any] = {
         "apiKey": NEWS_API_KEY,
@@ -204,7 +216,7 @@ async def fetch_news(category: str, query: str, page_size: int) -> list[dict[str
             response.raise_for_status()
             payload = response.json()
     except Exception:
-        return fallback_articles(category, query)
+        return await fetch_rss_news(category, query, page_size)
 
     articles = []
     for item in payload.get("articles", []):
@@ -221,7 +233,75 @@ async def fetch_news(category: str, query: str, page_size: int) -> list[dict[str
                 "category": category,
             }
         )
+    return articles or await fetch_rss_news(category, query, page_size)
+
+
+async def fetch_rss_news(category: str, query: str, page_size: int) -> list[dict[str, Any]]:
+    if query:
+        rss_url = f"https://news.google.com/rss/search?q={quote_plus(query)}&hl=en-US&gl=US&ceid=US:en"
+    elif category == "general":
+        rss_url = "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en"
+    else:
+        topic = GOOGLE_NEWS_TOPICS.get(category, "NATION")
+        rss_url = f"https://news.google.com/rss/topstories/section/topic/{topic}?hl=en-US&gl=US&ceid=US:en"
+
+    try:
+        async with httpx.AsyncClient(timeout=8, follow_redirects=True) as client:
+            response = await client.get(rss_url)
+            response.raise_for_status()
+    except Exception:
+        return fallback_articles(category, query)
+
+    articles = parse_rss_articles(response.text, category, page_size)
     return articles or fallback_articles(category, query)
+
+
+def parse_rss_articles(xml_text: str, category: str, page_size: int) -> list[dict[str, Any]]:
+    try:
+        root = ElementTree.fromstring(xml_text)
+    except ElementTree.ParseError:
+        return []
+
+    articles = []
+    for item in root.findall(".//item"):
+        title = text_from_xml(item, "title")
+        url = text_from_xml(item, "link")
+        if not title or not url:
+            continue
+
+        source = text_from_xml(item, "source") or source_from_title(title)
+        description = clean_html(text_from_xml(item, "description"))
+        articles.append(
+            {
+                "title": title,
+                "description": description or "Open the full story to read the latest update from the original publisher.",
+                "url": url,
+                "image_url": None,
+                "source": source or "Google News",
+                "published_at": text_from_xml(item, "pubDate") or now_iso(),
+                "category": category,
+            }
+        )
+        if len(articles) >= page_size:
+            break
+
+    return articles
+
+
+def text_from_xml(element: ElementTree.Element, tag: str) -> str:
+    child = element.find(tag)
+    return child.text.strip() if child is not None and child.text else ""
+
+
+def clean_html(value: str) -> str:
+    text = re.sub(r"<[^>]+>", " ", html.unescape(value or ""))
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def source_from_title(title: str) -> str:
+    if " - " not in title:
+        return ""
+    return title.rsplit(" - ", 1)[-1].strip()
 
 
 def fallback_articles(category: str, query: str) -> list[dict[str, Any]]:

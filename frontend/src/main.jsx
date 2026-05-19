@@ -89,6 +89,37 @@ const FALLBACK_HEADLINE_TEMPLATES = [
   'A concise update on momentum, impact, and next steps',
 ];
 
+const CATEGORY_IMAGES = {
+  general: [
+    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=1200&q=80',
+  ],
+  business: [
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80',
+  ],
+  technology: [
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+  ],
+  sports: [
+    'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?auto=format&fit=crop&w=1200&q=80',
+  ],
+  entertainment: [
+    'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1200&q=80',
+  ],
+  health: [
+    'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=80',
+  ],
+  science: [
+    'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=1200&q=80',
+  ],
+};
+
 function buildFallbackArticles(category, query) {
   const selected = activeFallbackSeeds(category);
   const generated = FALLBACK_HEADLINE_TEMPLATES.map((title, index) => {
@@ -120,6 +151,15 @@ function activeFallbackSeeds(category) {
   const categoryArticle = SAMPLE_ARTICLES.find((article) => article.category === category);
   const generalArticle = SAMPLE_ARTICLES.find((article) => article.category === 'general');
   return [categoryArticle, generalArticle].filter(Boolean);
+}
+
+function imageForArticle(article) {
+  if (article.image_url) return article.image_url;
+
+  const images = CATEGORY_IMAGES[article.category] || CATEGORY_IMAGES.general;
+  const key = article.url || article.title || article.category;
+  const imageIndex = [...key].reduce((total, char) => total + char.charCodeAt(0), 0) % images.length;
+  return images[imageIndex];
 }
 
 function App() {
@@ -458,7 +498,7 @@ function ArticleCard({ article, large = false, compact = false, saved, onBookmar
   return (
     <article className={`articleCard ${large ? 'large' : ''} ${compact ? 'compact' : ''}`}>
       <a href={article.url} target="_blank" rel="noreferrer" className="imageLink">
-        <img src={article.image_url || 'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=1200&q=80'} alt="" />
+        <img src={imageForArticle(article)} alt="" />
       </a>
       <div className="articleBody">
         <div className="meta">
