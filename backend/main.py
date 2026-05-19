@@ -47,7 +47,7 @@ app.add_middleware(
 
 
 class RegisterRequest(BaseModel):
-    name: str = Field(min_length=2, max_length=80)
+    name: str | None = Field(default=None, max_length=80)
     email: str = Field(min_length=5, max_length=120)
     password: str = Field(min_length=6, max_length=128)
 
@@ -271,11 +271,15 @@ async def news(
 @app.post("/auth/register")
 def register(payload: RegisterRequest) -> dict[str, Any]:
     password_hash, salt = hash_password(payload.password)
+    email = payload.email.lower().strip()
+    name = (payload.name or email.split("@", 1)[0]).strip()
+    if len(name) < 2:
+        name = "NewsPulse User"
     with db() as conn:
         try:
             cursor = conn.execute(
                 "INSERT INTO users (name, email, password_hash, salt, created_at) VALUES (?, ?, ?, ?, ?)",
-                (payload.name.strip(), payload.email.lower().strip(), password_hash, salt, now_iso()),
+                (name, email, password_hash, salt, now_iso()),
             )
             conn.execute(
                 "INSERT INTO preferences (user_id, categories) VALUES (?, ?)",
@@ -289,6 +293,11 @@ def register(payload: RegisterRequest) -> dict[str, Any]:
     return {"user": user_response(user), "token": token}
 
 
+@app.post("/register")
+def register_alias(payload: RegisterRequest) -> dict[str, Any]:
+    return register(payload)
+
+
 @app.post("/auth/login")
 def login(payload: LoginRequest) -> dict[str, Any]:
     with db() as conn:
@@ -298,6 +307,11 @@ def login(payload: LoginRequest) -> dict[str, Any]:
 
     token = sign_token({"sub": user["id"], "exp": int(time.time()) + 60 * 60 * 24})
     return {"user": user_response(user), "token": token}
+
+
+@app.post("/login")
+def login_alias(payload: LoginRequest) -> dict[str, Any]:
+    return login(payload)
 
 
 @app.get("/me")

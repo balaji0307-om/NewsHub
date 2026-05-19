@@ -12,10 +12,13 @@ import {
 } from 'lucide-react';
 import './styles.css';
 
+const DEFAULT_API_BASE = window.location.hostname.endsWith('.onrender.com')
+  ? 'https://newshub-backend-m9hg.onrender.com'
+  : 'http://127.0.0.1:8010';
 const API_BASE = (
   import.meta.env.VITE_API_URL
   || import.meta.env.VITE_API_BASE_URL
-  || 'http://127.0.0.1:8010'
+  || DEFAULT_API_BASE
 ).replace(/\/$/, '');
 const DEFAULT_CATEGORIES = ['general', 'business', 'technology', 'sports', 'entertainment', 'health', 'science'];
 const SAMPLE_ARTICLES = [
