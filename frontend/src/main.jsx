@@ -12,7 +12,11 @@ import {
 } from 'lucide-react';
 import './styles.css';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8010';
+const API_BASE = (
+  import.meta.env.VITE_API_URL
+  || import.meta.env.VITE_API_BASE_URL
+  || 'http://127.0.0.1:8010'
+).replace(/\/$/, '');
 const DEFAULT_CATEGORIES = ['general', 'business', 'technology', 'sports', 'entertainment', 'health', 'science'];
 const SAMPLE_ARTICLES = [
   {

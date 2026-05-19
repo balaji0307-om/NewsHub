@@ -56,7 +56,7 @@ uvicorn main:app --reload --host 127.0.0.1 --port 8010
 
 ```powershell
 cd frontend
-$env:VITE_API_BASE_URL='http://127.0.0.1:8010'
+$env:VITE_API_URL='http://127.0.0.1:8010'
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
@@ -84,6 +84,6 @@ Deploy this as two Render services.
 - Build command: `npm install && npm run build`
 - Publish directory: `dist`
 - Environment variables:
-  - `VITE_API_BASE_URL`: your Render backend URL, for example `https://your-backend-name.onrender.com`
+  - `VITE_API_URL`: your Render backend URL, for example `https://newshub-backend.onrender.com` with no trailing slash
 
 If the deployed frontend shows `0 latest stories loaded`, the frontend is running but cannot reach the backend URL.
