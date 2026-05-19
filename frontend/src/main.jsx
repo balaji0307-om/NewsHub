@@ -5,10 +5,8 @@ import {
   BookmarkCheck,
   Check,
   LogOut,
-  Newspaper,
   Search,
   Settings,
-  Sparkles,
   User,
   X,
 } from 'lucide-react';
@@ -187,8 +185,8 @@ function App() {
     <main>
       <header className="topbar">
         <a className="brand" href="#top">
-          <span><Newspaper size={20} /></span>
-          NewsHub
+          <span>N</span>
+          <strong>NewsPulse</strong>
         </a>
         <form className="search" onSubmit={submitSearch}>
           <Search size={18} />
@@ -213,6 +211,13 @@ function App() {
         </nav>
       </header>
 
+      <section className="tickerBar" aria-label="Breaking news ticker">
+        <div>
+          Breaking News · Latest Updates · Global Headlines · Trending Stories · Business · Technology · Sports · Entertainment ·
+          Breaking News · Latest Updates · Global Headlines · Trending Stories · Business · Technology · Sports · Entertainment ·
+        </div>
+      </section>
+
       {message && (
         <button className="toast" onClick={() => setMessage('')}>
           {message}<X size={16} />
@@ -221,9 +226,8 @@ function App() {
 
       <section id="top" className="hero">
         <div className="heroCopy">
-          <p><Sparkles size={16} /> Internship project</p>
-          <h1>Global news, searchable and saved around your interests.</h1>
-          <span>React + FastAPI news aggregation with login, preferences, and bookmarks.</span>
+          <h1>Fresh headlines, smart search, and saved stories in one place.</h1>
+          <span>Follow live global news, explore categories, and keep your favorite articles ready for later.</span>
         </div>
         <div className="heroStats">
           <strong>{articles.length}</strong>

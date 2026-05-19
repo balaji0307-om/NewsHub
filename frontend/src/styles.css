@@ -52,7 +52,6 @@ main {
 .userPill,
 .textButton,
 .search,
-.heroCopy p,
 .meta,
 .toast,
 .categoryBar button,
@@ -62,7 +61,7 @@ main {
 }
 
 .brand {
-  gap: 9px;
+  gap: 10px;
   font-weight: 850;
   letter-spacing: 0;
 }
@@ -72,9 +71,50 @@ main {
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: 2px;
   color: white;
+  font-weight: 950;
   background: #d32626;
+}
+
+.brand strong {
+  font-size: 1.04rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tickerBar {
+  position: sticky;
+  top: 75px;
+  z-index: 19;
+  overflow: hidden;
+  height: 34px;
+  border-bottom: 1px solid #151515;
+  background: #050505;
+  color: white;
+}
+
+.tickerBar div {
+  display: inline-block;
+  min-width: 200%;
+  padding-block: 9px;
+  color: #f4f4ef;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: ticker 24s linear infinite;
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .search {
@@ -142,7 +182,7 @@ main {
 .toast {
   position: fixed;
   right: 22px;
-  top: 78px;
+  top: 116px;
   z-index: 40;
   gap: 10px;
   max-width: min(420px, calc(100vw - 44px));
@@ -159,30 +199,17 @@ main {
   grid-template-columns: minmax(0, 1fr) 220px;
   gap: 28px;
   align-items: end;
-  padding: 58px clamp(18px, 4vw, 56px) 34px;
+  padding: 50px clamp(18px, 4vw, 56px) 34px;
 }
 
 .heroCopy {
   max-width: 920px;
 }
 
-.heroCopy p {
-  gap: 8px;
-  width: fit-content;
-  margin: 0 0 18px;
-  padding: 7px 10px;
-  border: 1px solid #cfcfc7;
-  border-radius: 8px;
-  background: white;
-  font-size: 0.85rem;
-  font-weight: 760;
-  text-transform: uppercase;
-}
-
 .heroCopy h1 {
   margin: 0;
-  max-width: 880px;
-  font-size: clamp(2.2rem, 5vw, 5.8rem);
+  max-width: 980px;
+  font-size: clamp(2.35rem, 5.2vw, 5.8rem);
   line-height: 0.95;
   letter-spacing: 0;
 }
@@ -537,6 +564,10 @@ main {
     position: static;
   }
 
+  .tickerBar {
+    position: static;
+  }
+
   .account {
     justify-content: start;
   }
@@ -562,11 +593,15 @@ main {
   }
 
   .hero {
-    padding-top: 32px;
+    padding-top: 34px;
   }
 
   .heroCopy h1 {
-    font-size: 2.45rem;
+    font-size: 2.5rem;
+  }
+
+  .tickerBar div {
+    animation-duration: 18s;
   }
 
   .heroStats {
