@@ -4,9 +4,14 @@ import {
   Bookmark,
   BookmarkCheck,
   Check,
+  Clock,
+  ExternalLink,
   LogOut,
+  Moon,
+  RefreshCw,
   Search,
   Settings,
+  Sun,
   User,
   X,
 } from 'lucide-react';
@@ -162,6 +167,13 @@ function imageForArticle(article) {
   return images[imageIndex];
 }
 
+function formatTime(value) {
+  if (!value) return 'Live';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Live';
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
+}
+
 function App() {
   const [articles, setArticles] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
@@ -179,18 +191,36 @@ function App() {
   const [message, setMessage] = useState('');
   const [apiError, setApiError] = useState('');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
+  const [theme, setTheme] = useState(localStorage.getItem('newshub_theme') || 'light');
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [visibleCount, setVisibleCount] = useState(9);
+  const [readingHistory, setReadingHistory] = useState(
+    JSON.parse(localStorage.getItem('newshub_history') || '[]'),
+  );
 
   const savedUrls = useMemo(() => new Set(bookmarks.map((item) => item.url)), [bookmarks]);
   const leadArticle = articles[0];
   const sideArticles = articles.slice(1, 3);
-  const gridArticles = articles.slice(3);
+  const gridArticles = articles.slice(3, visibleCount);
+  const hasMoreArticles = visibleCount < articles.length;
 
   useEffect(() => {
     getCategories();
   }, []);
 
   useEffect(() => {
+    setVisibleCount(9);
     getNews();
+  }, [activeCategory, query]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('newshub_theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const refresh = window.setInterval(() => getNews(false), 120000);
+    return () => window.clearInterval(refresh);
   }, [activeCategory, query]);
 
   useEffect(() => {
@@ -223,19 +253,21 @@ function App() {
     }
   }
 
-  async function getNews() {
-    setLoading(true);
+  async function getNews(showLoader = true) {
+    if (showLoader) setLoading(true);
     try {
       const params = new URLSearchParams({ category: activeCategory, q: query, page_size: '18' });
       const data = await request(`/news?${params}`);
       setArticles(data.articles || []);
       setApiError('');
+      setLastUpdated(new Date().toISOString());
     } catch {
       const fallbackArticles = buildFallbackArticles(activeCategory, query);
       setArticles(fallbackArticles.length ? fallbackArticles : buildFallbackArticles(activeCategory, ''));
       setApiError('');
+      setLastUpdated(new Date().toISOString());
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   }
 
@@ -326,6 +358,15 @@ function App() {
     setPreferences(next);
   }
 
+  function openArticle(article) {
+    const nextHistory = [
+      { title: article.title, url: article.url, source: article.source, read_at: new Date().toISOString() },
+      ...readingHistory.filter((item) => item.url !== article.url),
+    ].slice(0, 6);
+    setReadingHistory(nextHistory);
+    localStorage.setItem('newshub_history', JSON.stringify(nextHistory));
+  }
+
   return (
     <main>
       <header className="topbar">
@@ -342,6 +383,12 @@ function App() {
           />
         </form>
         <nav className="account">
+          <button className="iconButton" onClick={() => getNews()} title="Refresh headlines">
+            <RefreshCw size={18} />
+          </button>
+          <button className="iconButton" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} title="Toggle dark mode">
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           {user ? (
             <>
               <button className="iconButton" onClick={() => setSettingsOpen(true)} title="Preferences">
@@ -377,6 +424,7 @@ function App() {
         <div className="heroStats">
           <strong>{articles.length}</strong>
           <span>latest stories loaded</span>
+          {lastUpdated && <small>Updated {formatTime(lastUpdated)}</small>}
         </div>
       </section>
 
@@ -394,7 +442,17 @@ function App() {
 
       {loading ? (
         <section className="loadingGrid">
-          {Array.from({ length: 6 }).map((_, index) => <span key={index} />)}
+          {Array.from({ length: 6 }).map((_, index) => (
+            <article className="skeletonCard" key={index}>
+              <span />
+              <div>
+                <i />
+                <strong />
+                <p />
+                <p />
+              </div>
+            </article>
+          ))}
         </section>
       ) : (
         <>
@@ -408,10 +466,10 @@ function App() {
 
           {leadArticle && (
             <section className="leadLayout">
-              <ArticleCard article={leadArticle} large saved={savedUrls.has(leadArticle.url)} onBookmark={toggleBookmark} />
+              <ArticleCard article={leadArticle} large saved={savedUrls.has(leadArticle.url)} onBookmark={toggleBookmark} onOpen={openArticle} />
               <div className="sideStack">
                 {sideArticles.map((article) => (
-                  <ArticleCard key={article.url} article={article} compact saved={savedUrls.has(article.url)} onBookmark={toggleBookmark} />
+                  <ArticleCard key={article.url} article={article} compact saved={savedUrls.has(article.url)} onBookmark={toggleBookmark} onOpen={openArticle} />
                 ))}
               </div>
             </section>
@@ -425,9 +483,14 @@ function App() {
               </div>
               <div className="articleGrid">
                 {gridArticles.map((article) => (
-                  <ArticleCard key={article.url} article={article} saved={savedUrls.has(article.url)} onBookmark={toggleBookmark} />
+                  <ArticleCard key={article.url} article={article} saved={savedUrls.has(article.url)} onBookmark={toggleBookmark} onOpen={openArticle} />
                 ))}
               </div>
+              {hasMoreArticles && (
+                <button className="loadMoreButton" onClick={() => setVisibleCount((count) => count + 6)}>
+                  Load more headlines
+                </button>
+              )}
             </div>
 
             <aside className="bookmarkPanel">
@@ -442,6 +505,15 @@ function App() {
               ) : (
                 <p>Login to save favorites and keep your news preferences.</p>
               )}
+              <div className="historyPanel">
+                <h3>Reading history</h3>
+                {readingHistory.length ? readingHistory.map((item) => (
+                  <a key={item.url} href={item.url} target="_blank" rel="noreferrer">
+                    <span>{item.source}</span>
+                    {item.title}
+                  </a>
+                )) : <p>Open a story to build your recent reads.</p>}
+              </div>
             </aside>
           </section>
         </>
@@ -494,10 +566,10 @@ function App() {
   );
 }
 
-function ArticleCard({ article, large = false, compact = false, saved, onBookmark }) {
+function ArticleCard({ article, large = false, compact = false, saved, onBookmark, onOpen }) {
   return (
     <article className={`articleCard ${large ? 'large' : ''} ${compact ? 'compact' : ''}`}>
-      <a href={article.url} target="_blank" rel="noreferrer" className="imageLink">
+      <a href={article.url} target="_blank" rel="noreferrer" className="imageLink" onClick={() => onOpen(article)}>
         <img src={imageForArticle(article)} alt="" />
       </a>
       <div className="articleBody">
@@ -505,8 +577,14 @@ function ArticleCard({ article, large = false, compact = false, saved, onBookmar
           <span>{article.category}</span>
           <span>{article.source}</span>
         </div>
-        <h3><a href={article.url} target="_blank" rel="noreferrer">{article.title}</a></h3>
+        <h3><a href={article.url} target="_blank" rel="noreferrer" onClick={() => onOpen(article)}>{article.title}</a></h3>
         {!compact && <p>{article.description}</p>}
+        <div className="articleActions">
+          <span><Clock size={15} />{formatTime(article.published_at)}</span>
+          <a href={article.url} target="_blank" rel="noreferrer" onClick={() => onOpen(article)}>
+            Read <ExternalLink size={15} />
+          </a>
+        </div>
       </div>
       <button className="saveButton" onClick={() => onBookmark(article)} title={saved ? 'Remove bookmark' : 'Save bookmark'}>
         {saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
