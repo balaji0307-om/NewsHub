@@ -1,6 +1,6 @@
-# NewsHub Internship Project
+# 📰 NewsHub
 
-A modern news aggregation website built with React and FastAPI.
+A modern full-stack news aggregation platform built with React and FastAPI.
 
 ## Features
 
@@ -87,3 +87,11 @@ Deploy this as two Render services.
   - `VITE_API_URL`: your Render backend URL, for example `https://newshub-backend-m9hg.onrender.com` with no trailing slash
 
 If the deployed frontend shows `0 latest stories loaded`, the frontend is running but cannot reach the backend URL.
+
+---
+
+## 📸 Screenshot
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d8317848-46fa-4357-87c0-ba116676327a" />
+
+
